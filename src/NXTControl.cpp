@@ -203,42 +203,42 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 		    case OUT_AB:
 		      ResetMotorPosition(OUT_A, true);
 		      delay(WAIT_TIME);
-		      GetOutput(OUT_A, params);
+		      GetOutputState(OUT_A, params);
 		      delay(WAIT_TIME);
 
 		      OnFwd(port, power);
 		      delay(WAIT_TIME);
 
 		      while(params.BlockTachoCount < degrees){
-		          GetOutput(OUT_A, params);
+		          GetOutputState(OUT_A, params);
 		          delay(WAIT_TIME);
 		      }
 		      break;
 		    case OUT_AC:
 		      ResetMotorPosition(OUT_A, true);
 		      delay(WAIT_TIME);
-		      GetOutput(OUT_A, params);
+		      GetOutputState(OUT_A, params);
 		      delay(WAIT_TIME);
 
 		      OnFwd(port, power);
 		      delay(WAIT_TIME);
 
 		      while(params.BlockTachoCount < degrees){
-		          GetOutput(OUT_A, params);
+		          GetOutputState(OUT_A, params);
 		          delay(WAIT_TIME);
 		      }
 		      break;
 		    case OUT_BC:
 		      ResetMotorPosition(OUT_B, true);
 		      delay(WAIT_TIME);
-		      GetOutput(OUT_B, params);
+		      GetOutputState(OUT_B, params);
 		      delay(WAIT_TIME);
 
 		      OnFwd(port, power);
 		      delay(WAIT_TIME);
 
 		      while(params.BlockTachoCount < degrees){
-		          GetOutput(OUT_B, params);
+		          GetOutputState(OUT_B, params);
 		          delay(WAIT_TIME);
 		      }
 		      break;		      
@@ -247,14 +247,14 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 	}else{
 		ResetMotorPosition(port, true);
 		delay(WAIT_TIME);
-		GetOutput(port, params);
+		GetOutputState(port, params);
 		delay(WAIT_TIME);
 
 		OnFwd(port, power);
 		delay(WAIT_TIME);
 
 		while(params.BlockTachoCount < degrees){
-		    GetOutput(port, params);
+		    GetOutputState(port, params);
 		    delay(WAIT_TIME);
 		}
 	}
