@@ -1,0 +1,71 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+NXTControl		KEYWORD1			
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+PlayTone		KEYWORD2			
+OnFwd		KEYWORD2				
+OnRev		KEYWORD2				
+OnFwdReg		KEYWORD2			
+OnRevReg		KEYWORD2			
+Off		KEYWORD2					
+GetOutputState		KEYWORD2		
+ResetMotorPosition		KEYWORD2	
+RotateMotor		KEYWORD2			
+StartProgram		KEYWORD2		
+StopProgram		KEYWORD2	
+
+#######################################
+# Structures (KEYWORD3)
+#######################################
+
+OUTPUT_STATE		KEYWORD3	
+Port		KEYWORD3			
+Mode		KEYWORD3			
+RegMode		KEYWORD3			
+RunState		KEYWORD3		
+Power		KEYWORD3			
+TurnRatio		KEYWORD3		
+TachoCount		KEYWORD3		
+BlockTachoCount		KEYWORD3	
+RotationCount		KEYWORD3	
+TachoLimit		KEYWORD3			
+
+######################################
+# Constants (LITERAL1)
+#######################################
+
+DIRECT_COMMAND		LITERAL1
+DIRECT_COMMAND_REPONSE		LITERAL1
+COMMAND_PLAY_TONE		LITERAL1
+COMMAND_SET_OUTPUT		LITERAL1
+COMMAND_GET_OUTPUT		LITERAL1
+COMMAND_RESET_MOTOR		LITERAL1
+COMMAND_START_PROG		LITERAL1
+COMMAND_STOP_PROG		LITERAL1
+OUT_A		LITERAL1
+OUT_B		LITERAL1
+OUT_C		LITERAL1
+OUT_AB		LITERAL1
+OUT_AC		LITERAL1
+OUT_BC		LITERAL1
+OUT_ABC		LITERAL1
+MODE_MOTORON		LITERAL1
+MODE_BRAKE		LITERAL1
+MODE_REGULATED		LITERAL1
+REGMODE_IDLE		LITERAL1
+REGMODE_SPEED		LITERAL1
+REGMODE_SYNC		LITERAL1
+RUNSTATE_IDLE		LITERAL1
+RUNSTATE_RAMPUP		LITERAL1
+RUNSTATE_RUNNING		LITERAL1
+RUNSTATE_RAMPDOWN		LITERAL1
