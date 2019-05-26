@@ -201,65 +201,65 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 	if(port > OUT_C){
 		switch (port) {
 		    case OUT_AB:
-		      nxt.ResetMotorPosition(OUT_A, true);
+		      ResetMotorPosition(OUT_A, true);
 		      delay(WAIT_TIME);
-		      nxt.GetOutput(OUT_A, params);
+		      GetOutput(OUT_A, params);
 		      delay(WAIT_TIME);
 
-		      nxt.OnFwd(port, power);
+		      OnFwd(port, power);
 		      delay(WAIT_TIME);
 
 		      while(params.BlockTachoCount < degrees){
-		          nxt.GetOutput(OUT_A, params);
+		          GetOutput(OUT_A, params);
 		          delay(WAIT_TIME);
 		      }
 		      break;
 		    case OUT_AC:
-		      nxt.ResetMotorPosition(OUT_A, true);
+		      ResetMotorPosition(OUT_A, true);
 		      delay(WAIT_TIME);
-		      nxt.GetOutput(OUT_A, params);
+		      GetOutput(OUT_A, params);
 		      delay(WAIT_TIME);
 
-		      nxt.OnFwd(port, power);
+		      OnFwd(port, power);
 		      delay(WAIT_TIME);
 
 		      while(params.BlockTachoCount < degrees){
-		          nxt.GetOutput(OUT_A, params);
+		          GetOutput(OUT_A, params);
 		          delay(WAIT_TIME);
 		      }
 		      break;
 		    case OUT_BC:
-		      nxt.ResetMotorPosition(OUT_B, true);
+		      ResetMotorPosition(OUT_B, true);
 		      delay(WAIT_TIME);
-		      nxt.GetOutput(OUT_B, params);
+		      GetOutput(OUT_B, params);
 		      delay(WAIT_TIME);
 
-		      nxt.OnFwd(port, power);
+		      OnFwd(port, power);
 		      delay(WAIT_TIME);
 
 		      while(params.BlockTachoCount < degrees){
-		          nxt.GetOutput(OUT_B, params);
+		          GetOutput(OUT_B, params);
 		          delay(WAIT_TIME);
 		      }
 		      break;		      
 		    default:;
 		}
 	}else{
-		nxt.ResetMotorPosition(port, true);
+		ResetMotorPosition(port, true);
 		delay(WAIT_TIME);
-		nxt.GetOutput(port, params);
+		GetOutput(port, params);
 		delay(WAIT_TIME);
 
-		nxt.OnFwd(port, power);
+		OnFwd(port, power);
 		delay(WAIT_TIME);
 
 		while(params.BlockTachoCount < degrees){
-		    nxt.GetOutput(port, params);
+		    GetOutput(port, params);
 		    delay(WAIT_TIME);
 		}
 	}
 
-		nxt.Off(port);
+		Off(port);
 }
 
 void NXTControl::StartProgram(String name){
