@@ -1,8 +1,4 @@
-#include <Arduino.h>
-
 #include "NXTControl.h"
-
-#include "HardwareSerial.h"
 
 
 NXTControl::NXTControl(){
@@ -13,31 +9,38 @@ NXTControl::NXTControl(Stream &serial){
 	_serial = &serial;
 }
 
-void NXTControl::send(byte port, int power, byte regMode, 
-		 byte turnRatio, byte runState, byte tachoLimit){
+void NXTControl::StartProgram(String name){
 
-	byte sendCommand[] = 
-	{
-		0x0C,
-		0x00,
-		DIRECT_COMMAND,
-		COMMAND_SET_OUTPUT,
-		port,
-		power,
-		0x07,
-		regMode,
-		turnRatio,
-		runState,
-		0x00, 0x00, 0x00, 0x00
-	};
+	byte size = name.length() + 5;
+	byte commandToSend[size];
 
+	commandToSend[0] = size-2;
+	commandToSend[1] = 0x00;
+	commandToSend[2] = DIRECT_COMMAND;
+	commandToSend[3] = COMMAND_START_PROGRAM;
 
-	_serial->write(sendCommand, sizeof(sendCommand));					 
-					 
+	name += "\0";
+
+	for(byte i=4; i<name.length()+5; i++){
+	    commandToSend[i] = name.charAt(i-4);
+	}
+
+	_serial->write(commandToSend, sizeof(commandToSend));
 }
 
-void NXTControl::PlayTone(unsigned int freq, unsigned int duration){
-	byte sendCommand[] =
+void NXTControl::StopProgram(){
+	byte commandToSend[] = {
+			0x02,
+			0x00,
+			DIRECT_COMMAND,
+			COMMAND_STOP_PROGRAM
+		};
+
+	_serial->write(commandToSend, sizeof(commandToSend));
+}
+
+void NXTControl::PlayTone(unsigned int frequency, unsigned int duration){
+	byte commandToSend[] =
 	{
 		0x06,
 		0x00,
@@ -46,122 +49,210 @@ void NXTControl::PlayTone(unsigned int freq, unsigned int duration){
 		lowByte(freq),
 		highByte(freq),
 		lowByte(duration),
-		highByte(duration)	
+		highByte(duration)
 	};
 
-
-	_serial->write(sendCommand, sizeof(sendCommand));
+	_serial->write(commandToSend, sizeof(commandToSend));
 }
 
-void NXTControl::OnFwd(byte port, int power){
+void NXTControl::SetOutputState(byte port, sbyte power, byte mode,
+		byte regulationMode, sbyte turnRatio, byte runState,
+		unsigned long tachoLimit){
+
+	power = constrain(power, -100, 100);
+
+	byte commandToSend[] = 
+	{
+		0x0C,
+		0x00,
+		DIRECT_COMMAND,
+		COMMAND_SET_OUTPUT_STATE,
+		port,
+		power,
+		mode,
+		regulationMode,
+		turnRatio,
+		runState,
+		byteRead(tachoLimit, 0),
+		byteRead(tachoLimit, 1),
+		byteRead(tachoLimit, 2),
+		byteRead(tachoLimit, 3)
+	};
+
 	if(port > OUT_C){
-		if(port == OUT_AB){
-			send(OUT_A, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
-			delay(WAIT_TIME);
-			send(OUT_B, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
-		}
-		if(port == OUT_AC){
-			send(OUT_A, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
-			delay(WAIT_TIME);
-			send(OUT_C, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);		
-		}
-		if(port == OUT_BC){
-			send(OUT_B, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
-			delay(WAIT_TIME);
-			send(OUT_C, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);			
-		}
-		if(port == OUT_ABC){
-			send(OUT_A, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
-			send(OUT_B, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);		
-			send(OUT_C, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);		
+		switch (port){
+			case OUT_AB:
+				commandToSend[4] = OUT_A;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				commandToSend[4] = OUT_B;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				break;
+			case OUT_AC:
+				commandToSend[4] = OUT_A;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				commandToSend[4] = OUT_C;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				break;
+			case OUT_BC:
+				commandToSend[4] = OUT_B;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				commandToSend[4] = OUT_C;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				break;
+			case OUT_ABC:
+				commandToSend[4] = 0xFF;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				break;
 		}
 	}else{
-		send(port, power, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
-	}	
-
+		_serial->write(commandToSend, sizeof(commandToSend));					 
+	}
+					 
 }
 
-void NXTControl::OnRev(byte port, int power){
-	OnFwd(port, -power);
+void NXTControl::OnFwd(byte port, sbyte power){
+	SetOutputState(port, power, MODE_MOTOR_ON, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
 }
 
-void NXTControl::OnFwdReg(byte port, int power, byte regMode, 
-		 byte turnRatio, byte runState, byte tachoLimit){
-
-	send(port, power, regMode, turnRatio, runState, tachoLimit);
-
+void NXTControl::OnRev(byte port, sbyte power){
+	SetOutputState(port, -power, MODE_MOTOR_ON, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
 }
 
-void NXTControl::OnRevReg(byte port, int power, byte regMode, 
-		 byte turnRatio, byte runState, byte tachoLimit){
-
-	send(port, -power, regMode, turnRatio, runState, tachoLimit);
-	
+void NXTControl::OnFwdReg(byte port, sbyte power, byte regMode){
+	SetOutputState(port, power, MODE_MOTOR_ON, regMode, 0, RUNSTATE_RUNNING, 0);
 }
 
-void NXTControl::Off(int port){
-	OnFwd(port, 0);
+void NXTControl::OnRevReg(byte port, sbyte power, byte regMode){
+	SetOutputState(port, -power, MODE_MOTOR_ON, regMode, 0, RUNSTATE_RUNNING, 0);
 }
 
-bool NXTControl::GetOutputState(byte port, OUTPUT_STATE &params){
+void NXTControl::Off(byte port){
+	SetOutputState(port, 0, MODE_BRAKE, regMode, 0, RUNSTATE_RUNNING, 0);
+}
+
+void NXTControl::SetInputMode(byte port, byte sensorType, byte sensorMode){
+	byte commandToSend[] = 
+	{
+		0x05,
+		0x00,
+		DIRECT_COMMAND,
+		COMMAND_SET_INPUT_MODE,
+		port,
+		sensorType,
+		sensorMode
+	};
+
+	_serial->write(commandToSend, sizeof(commandToSend));
+}
+
+
+bool NXTControl::GetOutputState(byte port, OutputState &params){
 
 	if(port > OUT_C) return false;
 
-	byte sendCommand[] = {0x03, 0x00, DIRECT_COMMAND_RESPONSE,
-						  COMMAND_GET_OUTPUT,
+	byte commandToSend[] = {0x03, 0x00, DIRECT_COMMAND_RESPONSE,
+						  COMMAND_GET_OUTPUT_STATE,
 						  port};
 
-	_serial->write(sendCommand, sizeof(sendCommand));
+	_serial->write(commandToSend, sizeof(commandToSend));
 	
 	unsigned long time = millis();
 	while(!_serial->available()){
-		// espera receber os valores
-		if(millis() - time > 2000)
+		// expect to receive the values
+		if(millis() - time > 100)
 			break;
 	}
 
-	byte receiveCommand[30];
-	byte cont = 0;	
-	while(_serial->available()){
-		receiveCommand[cont] = _serial->read();
-		cont++;
+	byte returnPackage[27];
+	_serial->readBytes(returnPackage, 27);
+
+	params.statusByte		= returnPackage[4]
+	params.port 			= returnPackage[5];
+	params.power 			= returnPackage[6];
+	params.mode 			= returnPackage[7];
+	params.regulationMode	= returnPackage[8];
+	params.turnRatio 		= returnPackage[9];
+	params.runState 		= returnPackage[10];
+	params.tachoLimit 		= returnPackage[11] |
+							  (returnPackage[12] << 8) |
+							  (returnPackage[13] << 16) |
+							  (returnPackage[14] << 32);
+	params.tachoCount 		= returnPackage[15] |
+							  (returnPackage[16] << 8) |
+							  (returnPackage[17] << 16) |
+							  (returnPackage[18] << 32);
+	params.blockTachoCount 	= returnPackage[19] |
+							  (returnPackage[20] << 8) |
+							  (returnPackage[21] << 16) |
+							  (returnPackage[22] << 32);
+	params.rotationCount	= returnPackage[23] |
+							  (returnPackage[24] << 8) |
+							  (returnPackage[25] << 16) |
+							  (returnPackage[26] << 32);
+
+	if(params.statusByte != 0)
+		return false;
+
+	return true;
+}
+
+bool NXTControl::GetInputValues(byte port, InputValues &params){
+
+	if(port > S4) return false;
+
+	byte commandToSend[] = {0x03, 0x00, DIRECT_COMMAND_RESPONSE,
+						  COMMAND_GET_INPUT_VALUES,
+						  port};
+
+	_serial->write(commandToSend, sizeof(commandToSend));
+	
+	unsigned long time = millis();
+	while(!_serial->available()){
+		// expect to receive the values
+		if(millis() - time > 100)
+			break;
 	}
 
-	params.Port 			= receiveCommand[5];
-	params.Power 			= receiveCommand[6];
-	params.Mode 			= receiveCommand[7];
-	params.RegMode 			= receiveCommand[8];
-	params.TurnRatio 		= receiveCommand[9];
-	params.RunState 		= receiveCommand[10];
+	byte returnPackage[18];
+	_serial->readBytes(returnPackage, 18);
 
-	params.TachoLimit 		= receiveCommand[11] |
-							  (receiveCommand[12] << 8) |
-							  (receiveCommand[13] << 16) |
-							  (receiveCommand[14] << 32);
-	params.TachoCount 		= receiveCommand[15] |
-							  (receiveCommand[16] << 8) |
-							  (receiveCommand[17] << 16) |
-							  (receiveCommand[18] << 32);
-	params.BlockTachoCount 	= receiveCommand[19] |
-							  (receiveCommand[20] << 8) |
-							  (receiveCommand[21] << 16) |
-							  (receiveCommand[22] << 32);
-	params.RotationCount	= receiveCommand[23] |
-							  (receiveCommand[24] << 8) |
-							  (receiveCommand[25] << 16) |
-							  (receiveCommand[26] << 32);
+	statusByte;
+	port;
+	isValid;
+	isCalibrated;
+	sensorType;
+	sensorMode;
+	rawValue;
+	normalizedValue;
+	scaledValue;
+	calibratedValue;
 
-	if(receiveCommand[2] == 0)
-		return true;
+	params.statusByte		= returnPackage[4]
+	params.port 			= returnPackage[5];
+	params.isValid 			= returnPackage[6];
+	params.isCalibrated		= returnPackage[7];
+	params.sensorType		= returnPackage[8];
+	params.sensorMode 		= returnPackage[9];
+	params.rawValue			= returnPackage[10] |
+							  (returnPackage[11] << 8);
+	params.normalizedValue	= returnPackage[12] |
+							  (returnPackage[13] << 8);
+	params.scaledValue		= returnPackage[14] |
+							  (returnPackage[15] << 8);
+	params.calibratedValue	= returnPackage[16] |
+							  (returnPackage[17] << 8);
 
-	return receiveCommand[2];	
+	if(params.statusByte != 0)
+		return false;
+
+	return true;
 }
 
 void NXTControl::ResetMotorPosition(byte port, bool isRelative = true){
-	byte sendCommand[] = {0x04,
+	byte commandToSend[] = {0x04,
 						  0x00,
 						  DIRECT_COMMAND,
-						  COMMAND_RESET_MOTOR,
+						  COMMAND_RESET_MOTOR_POSITION,
 						  port,
 						  isRelative
 						 };
@@ -169,80 +260,96 @@ void NXTControl::ResetMotorPosition(byte port, bool isRelative = true){
 	if(port > OUT_C){
 		switch (port) {
 		    case OUT_AB:
-				sendCommand[4] = 	OUT_A;		 
-				_serial->write(sendCommand, sizeof(sendCommand));					 
-				sendCommand[4] = 	OUT_B;		 
-				_serial->write(sendCommand, sizeof(sendCommand));					 
+				commandToSend[4] = 	OUT_A;		 
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				commandToSend[4] = 	OUT_B;		 
+				_serial->write(commandToSend, sizeof(commandToSend));					 
 		    	break;
 		    case OUT_AC:
-				sendCommand[4] = 	OUT_A;		 
-				_serial->write(sendCommand, sizeof(sendCommand));					 
-				sendCommand[4] = 	OUT_C;		 
-				_serial->write(sendCommand, sizeof(sendCommand));	
+				commandToSend[4] = 	OUT_A;		 
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				commandToSend[4] = 	OUT_C;		 
+				_serial->write(commandToSend, sizeof(commandToSend));	
 		      	break;
 		    case OUT_BC:
-				sendCommand[4] = 	OUT_B;		 
-				_serial->write(sendCommand, sizeof(sendCommand));					 
-				sendCommand[4] = 	OUT_C;		 
-				_serial->write(sendCommand, sizeof(sendCommand));	
+				commandToSend[4] = 	OUT_B;		 
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				commandToSend[4] = 	OUT_C;		 
+				_serial->write(commandToSend, sizeof(commandToSend));	
 		      	break;		      
-		    default:;
+		    case OUT_ABC:
+				commandToSend[4] = 0xFF;
+				_serial->write(commandToSend, sizeof(commandToSend));					 
+				break;
 		}
 	}else{
-		_serial->write(sendCommand, sizeof(sendCommand));					 
+		_serial->write(commandToSend, sizeof(commandToSend));					 
 	}					 
 
 }
 
 void NXTControl::RotateMotor(byte port, int power, int degrees){
 
-	OUTPUT_STATE params;
+	OutputState params;
 
 	if(port > OUT_C){
 		switch (port) {
 		    case OUT_AB:
-		      ResetMotorPosition(OUT_A, true);
-		      delay(WAIT_TIME);
-		      GetOutputState(OUT_A, params);
-		      delay(WAIT_TIME);
+				ResetMotorPosition(OUT_A, true);
+				delay(WAIT_TIME);
+				GetOutputState(OUT_A, params);
+				delay(WAIT_TIME);
 
-		      OnFwd(port, power);
-		      delay(WAIT_TIME);
+				OnFwd(port, power);
+				delay(WAIT_TIME);
 
-		      while(params.BlockTachoCount < degrees){
-		          GetOutputState(OUT_A, params);
-		          delay(WAIT_TIME);
-		      }
-		      break;
+				while(params.BlockTachoCount < degrees){
+				  GetOutputState(OUT_A, params);
+				  delay(WAIT_TIME);
+				}
+				break;
 		    case OUT_AC:
-		      ResetMotorPosition(OUT_A, true);
-		      delay(WAIT_TIME);
-		      GetOutputState(OUT_A, params);
-		      delay(WAIT_TIME);
+				ResetMotorPosition(OUT_A, true);
+				delay(WAIT_TIME);
+				GetOutputState(OUT_A, params);
+				delay(WAIT_TIME);
 
-		      OnFwd(port, power);
-		      delay(WAIT_TIME);
+				OnFwd(port, power);
+				delay(WAIT_TIME);
 
-		      while(params.BlockTachoCount < degrees){
-		          GetOutputState(OUT_A, params);
-		          delay(WAIT_TIME);
-		      }
-		      break;
+				while(params.BlockTachoCount < degrees){
+				  GetOutputState(OUT_A, params);
+				  delay(WAIT_TIME);
+				}
+				break;
 		    case OUT_BC:
-		      ResetMotorPosition(OUT_B, true);
-		      delay(WAIT_TIME);
-		      GetOutputState(OUT_B, params);
-		      delay(WAIT_TIME);
+				ResetMotorPosition(OUT_B, true);
+				delay(WAIT_TIME);
+				GetOutputState(OUT_B, params);
+				delay(WAIT_TIME);
 
-		      OnFwd(port, power);
-		      delay(WAIT_TIME);
+				OnFwd(port, power);
+				delay(WAIT_TIME);
 
-		      while(params.BlockTachoCount < degrees){
-		          GetOutputState(OUT_B, params);
-		          delay(WAIT_TIME);
-		      }
-		      break;		      
-		    default:;
+				while(params.BlockTachoCount < degrees){
+				  GetOutputState(OUT_B, params);
+				  delay(WAIT_TIME);
+				}
+				break;		      
+		    case OUT_ABC:
+				ResetMotorPosition(OUT_A, true);
+				delay(WAIT_TIME);
+				GetOutputState(OUT_A, params);
+				delay(WAIT_TIME);
+
+				OnFwd(port, power);
+				delay(WAIT_TIME);
+
+				while(params.BlockTachoCount < degrees){
+				  GetOutputState(OUT_A, params);
+				  delay(WAIT_TIME);
+				}
+		    	break;
 		}
 	}else{
 		ResetMotorPosition(port, true);
@@ -259,35 +366,5 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 		}
 	}
 
-		Off(port);
-}
-
-void NXTControl::StartProgram(String name){
-
-	byte size = name.length() + 5;
-	byte sendCommand[size];
-
-	sendCommand[0] = size-2;
-	sendCommand[1] = 0x00;
-	sendCommand[2] = DIRECT_COMMAND;
-	sendCommand[3] = COMMAND_START_PROG;
-
-	name += "\0";
-
-	for(byte i=4; i<name.length()+5; i++){
-	    sendCommand[i] = name.charAt(i-4);
-	}
-
-	_serial->write(sendCommand, sizeof(sendCommand));
-}
-
-void NXTControl::StopProgram(){
-	byte sendCommand[] = {
-			0x02,
-			0x00,
-			DIRECT_COMMAND,
-			COMMAND_STOP_PROG
-		};
-
-	_serial->write(sendCommand, sizeof(sendCommand));
+	Off(port);
 }
