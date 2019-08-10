@@ -107,7 +107,7 @@ bool NXTControl::GetOutputState(byte port, OUTPUT_STATE &params){
 
 	if(port > OUT_C) return false;
 
-	byte sendCommand[] = {0x03, 0x00, DIRECT_COMMAND_REPONSE,
+	byte sendCommand[] = {0x03, 0x00, DIRECT_COMMAND_RESPONSE,
 						  COMMAND_GET_OUTPUT,
 						  port};
 
