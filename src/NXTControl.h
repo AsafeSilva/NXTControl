@@ -99,6 +99,8 @@
 #define SLOPE_MASK 0x1F
 #define MODE_MASK 0xE0
 
+typedef int8_t sbyte;
+
 // Package returned by GetOutputState function
 struct OutputState{
 	byte statusByte;
@@ -129,8 +131,6 @@ struct InputValues{
 };
 
 #define WAIT_TIME	45
-
-typedef int8_t sbyte;
 
 #define byteRead(x,n) ((uint8_t) ((x >> 8*n) & 0xFF))
 
