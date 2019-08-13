@@ -46,8 +46,8 @@ void NXTControl::PlayTone(unsigned int frequency, unsigned int duration){
 		0x00,
 		DIRECT_COMMAND,
 		COMMAND_PLAY_TONE,
-		lowByte(freq),
-		highByte(freq),
+		lowByte(frequency),
+		highByte(frequency),
 		lowByte(duration),
 		highByte(duration)
 	};
@@ -127,7 +127,7 @@ void NXTControl::OnRevReg(byte port, sbyte power, byte regMode){
 }
 
 void NXTControl::Off(byte port){
-	SetOutputState(port, 0, MODE_BRAKE, regMode, 0, RUNSTATE_RUNNING, 0);
+	SetOutputState(port, 0, MODE_BRAKE, REGMODE_IDLE, 0, RUNSTATE_RUNNING, 0);
 }
 
 void NXTControl::SetInputMode(byte port, byte sensorType, byte sensorMode){
@@ -166,7 +166,7 @@ bool NXTControl::GetOutputState(byte port, OutputState &params){
 	byte returnPackage[27];
 	_serial->readBytes(returnPackage, 27);
 
-	params.statusByte		= returnPackage[4]
+	params.statusByte		= returnPackage[4];
 	params.port 			= returnPackage[5];
 	params.power 			= returnPackage[6];
 	params.mode 			= returnPackage[7];
@@ -216,18 +216,7 @@ bool NXTControl::GetInputValues(byte port, InputValues &params){
 	byte returnPackage[18];
 	_serial->readBytes(returnPackage, 18);
 
-	statusByte;
-	port;
-	isValid;
-	isCalibrated;
-	sensorType;
-	sensorMode;
-	rawValue;
-	normalizedValue;
-	scaledValue;
-	calibratedValue;
-
-	params.statusByte		= returnPackage[4]
+	params.statusByte		= returnPackage[4];
 	params.port 			= returnPackage[5];
 	params.isValid 			= returnPackage[6];
 	params.isCalibrated		= returnPackage[7];
@@ -288,7 +277,7 @@ void NXTControl::ResetMotorPosition(byte port, bool isRelative = true){
 
 }
 
-void NXTControl::RotateMotor(byte port, int power, int degrees){
+void NXTControl::RotateMotor(byte port, sbyte power, int degrees){
 
 	OutputState params;
 
@@ -303,7 +292,7 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 				OnFwd(port, power);
 				delay(WAIT_TIME);
 
-				while(params.BlockTachoCount < degrees){
+				while(params.blockTachoCount < degrees){
 				  GetOutputState(OUT_A, params);
 				  delay(WAIT_TIME);
 				}
@@ -317,7 +306,7 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 				OnFwd(port, power);
 				delay(WAIT_TIME);
 
-				while(params.BlockTachoCount < degrees){
+				while(params.blockTachoCount < degrees){
 				  GetOutputState(OUT_A, params);
 				  delay(WAIT_TIME);
 				}
@@ -331,7 +320,7 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 				OnFwd(port, power);
 				delay(WAIT_TIME);
 
-				while(params.BlockTachoCount < degrees){
+				while(params.blockTachoCount < degrees){
 				  GetOutputState(OUT_B, params);
 				  delay(WAIT_TIME);
 				}
@@ -345,7 +334,7 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 				OnFwd(port, power);
 				delay(WAIT_TIME);
 
-				while(params.BlockTachoCount < degrees){
+				while(params.blockTachoCount < degrees){
 				  GetOutputState(OUT_A, params);
 				  delay(WAIT_TIME);
 				}
@@ -360,7 +349,7 @@ void NXTControl::RotateMotor(byte port, int power, int degrees){
 		OnFwd(port, power);
 		delay(WAIT_TIME);
 
-		while(params.BlockTachoCount < degrees){
+		while(params.blockTachoCount < degrees){
 		    GetOutputState(port, params);
 		    delay(WAIT_TIME);
 		}
