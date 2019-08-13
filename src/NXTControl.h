@@ -51,7 +51,7 @@
 #define OUT_ABC 0x06
 
 // Valide enumaration for "Output Mode"
-#define MODE_MOTORON 	0x01
+#define MODE_MOTOR_ON 	0x01
 #define MODE_BRAKE		0x02
 #define MODE_REGULATED 	0x04
 
